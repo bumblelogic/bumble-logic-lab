@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Bumble Logic Lab</title>
+
+  <style>
+    :root {
+      --o: #ff8a00;
+      --d: #e07000;
+      --k: #000;
+      --w: #fff;
+      --g: #f6f6f6;
+      --b: #e2e2e2;
+      color-scheme: light;
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+    body {
+      margin: 0;
+      background: var(--w);
+      color: var(--k);
+      font: 15px/1.55 Georgia, 'Times New Roman', serif;
+    }
+    h1, h2, h3, button, nav, .tabs, label, input, select {
+      font-family: 'Trebuchet MS', Verdana, sans-serif;
+    }
+
+    /* AUTH OVERLAY STYLES */
+    #authOverlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #101828, #243b55);
+      padding: 20px;
+      color: #182230;
+    }
+    .auth-container {
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      padding: 38px;
+      border-radius: 18px;
+      box-shadow: 0 15px 45px rgba(0,0,0,.25);
+    }
+    .auth-logo {
+      text-align: center;
+      font-size: 27px;
+      font-weight: bold;
+      color: #243b55;
+      margin-bottom: 8px;
+    }
+    .auth-subtitle {
+      text-align: center;
+      color: #667085;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+    .auth-container h2 {
+      font-size: 21px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .auth-container label {
+      display: block;
+      font-size: 13px;
+      font-weight: bold;
+      margin: 14px 0 7px;
+    }
+    .auth-container input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      outline: none;
+      font-size: 14px;
+    }
+    .auth-container input:focus {
+      border-color: #356ae6;
+      box-shadow: 0 0 0 3px #356ae622;
+    }
+    .auth-btn {
+      width: 100%;
+      padding: 13px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 8px;
+      background: #243b55;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .auth-btn:hover {
+      background: #356ae6;
+    }
+    .auth-link {
+      display: block;
+      text-align: center;
+      margin-top: 17px;
+      color: #356ae6;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    #authMessage {
+      margin-top: 16px;
+      text-align: center;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #475467;
+      overflow-wrap: anywhere;
+    }
+
+    /* LAB STYLES */
+    header { background: repeating-linear-gradient(90deg, var(--k) 0 28px, var(--o) 28px 56px); padding: 0; }
+    header div { background: var(--k); color: var(--o); padding: 10px 18px; display: flex; align-items: center; gap: 12px; border-bottom: 4px solid var(--o); }
+    header h1 { margin: 0; font-size: 22px; color: var(--w); }
+    header h1 b { color: var(--o); }
+    #pb { margin-left: auto; width: min(220px, 40%); height: 10px; background: #333; border-radius: 6px; overflow: hidden; }
+    #pb i { display: block; height: 100%; background: var(--o); }
+    .header-user { display: flex; align-items: center; gap: 10px; margin-left: 12px; font-size: 13px; font-family: sans-serif; color: #fff; }
+    .logout-btn { background: #333; color: #fff; border: 1px solid #555; padding: 4px 10px; border-radius: 4px; font-size: 12px; cursor: pointer; }
+    .logout-btn:hover { background: #e07000; color: #000; }
+
+    .wrap { display: flex; min-height: 80vh; }
+    aside { width: 250px; flex: none; border-right: 3px solid var(--k); padding: 12px; background: var(--g); }
+    aside input { width: 100%; padding: 8px; border: 2px solid var(--k); border-radius: 6px; margin-bottom: 8px; }
+    #nav a { display: block; padding: 7px 9px; border-left: 5px solid transparent; cursor: pointer; font-family: 'Trebuchet MS', sans-serif; font-size: 14px; }
+    #nav a:hover, #nav a.on { border-color: var(--o); background: var(--w); font-weight: bold; }
+    main { flex: 1; padding: 18px 22px; min-width: 0; }
+    button { background: var(--o); color: var(--k); border: 2px solid var(--k); border-radius: 6px; padding: 7px 13px; font-weight: bold; cursor: pointer; }
+    button:hover { background: var(--k); color: var(--o); }
+    button.alt { background: var(--w); }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 16px; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+    .c { border: 2px solid var(--k); border-radius: 8px; padding: 12px; background: var(--w); }
+    .c h3 { margin: 0 0 4px; }
+    .box { border-left: 6px solid var(--o); background: var(--g); padding: 10px 14px; margin: 10px 0; }
+    .box b { font-family: 'Trebuchet MS', sans-serif; }
+    .stat { font: bold 28px 'Trebuchet MS', sans-serif; color: var(--d); }
+    .opt { display: block; width: 100%; text-align: left; margin: 6px 0; background: var(--w); }
+    .ok { background: #ffd9a0 !important; }
+    .no { background: #ddd !important; text-decoration: line-through; }
+    .fc { border: 3px solid var(--k); border-radius: 12px; min-height: 170px; display: flex; align-items: center; justify-content: center; padding: 20px; font-size: 19px; text-align: center; cursor: pointer; background: var(--w); box-shadow: 8px 8px 0 var(--o); }
+    .row { display: flex; gap: 14px; flex-wrap: wrap; }
+    .side { width: 300px; flex: none; }
+    .bw { flex: 1; min-width: 300px; position: relative; }
+    .side select, .side input { width: 100%; padding: 7px; border: 2px solid var(--k); border-radius: 6px; margin: 4px 0; }
+    .side ol { padding-left: 20px; font-size: 13px; margin: 6px 0; }
+    #sr button { display: block; width: 100%; text-align: left; margin: 3px 0; padding: 4px 8px; background: var(--w); }
+    #sw { overflow-x: auto; border: 3px solid var(--k); border-radius: 10px; background: #fffaf0; padding-top: 4px; }
+    #tilt { transform-origin: 50% 0; transition: transform .4s; }
+    #tilt.on { transform: perspective(1300px) rotateX(14deg); }
+    #pc { position: absolute; right: 8px; top: 30px; z-index: 5; background: var(--k); color: var(--o); font: 11px/1.3 monospace; padding: 6px 8px; border-radius: 6px; max-width: 210px; opacity: .95; pointer-events: none; }
+    #msg { margin: 6px 0; font-family: 'Trebuchet MS', sans-serif; font-weight: bold; min-height: 20px; }
+    #bot { position: fixed; right: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); z-index: 20; font-family: 'Trebuchet MS', sans-serif; }
+    #bp { display: none; width: min(330px, 92vw); background: var(--w); border: 3px solid var(--k); border-radius: 10px; margin-bottom: 8px; box-shadow: 6px 6px 0 var(--o); }
+    #bp h4 { margin: 0; background: var(--k); color: var(--o); padding: 8px 10px; }
+    #bl { height: 230px; overflow: auto; padding: 8px; font-size: 13px; }
+    #bl p { margin: 5px 0; padding: 6px 8px; border-radius: 8px; background: var(--g); }
+    #bl p.u { background: var(--o); text-align: right; }
+    #bp input { width: 100%; border: 0; border-top: 2px solid var(--k); padding: 9px; font-size: 14px; }
+    table { border-collapse: collapse; }
+    td, th { border: 1px solid var(--k); padding: 3px 9px; text-align: center; }
+    th { background: var(--o); }
+    pre { background: var(--k); color: #ffd9a0; padding: 10px; border-radius: 6px; overflow: auto; font-size: 12px; }
+    .pin { cursor: crosshair; }
+    .pin:hover { fill: var(--o); }
+    .hidden { display: none !important; }
+
+    @media (max-width: 760px) {
+      .wrap { display: block; }
+      aside { width: auto; border-right: 0; border-bottom: 3px solid var(--k); }
+      .side { width: 100%; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- AUTHENTICATION OVERLAY -->
+  <div id="authOverlay">
+    <div class="auth-container">
+      <div class="auth-logo">BUMBLE LOGIC</div>
+      <div class="auth-subtitle">A private space for approved members</div>
+
+      <!-- LOGIN SECTION -->
+      <section id="loginSection">
+        <h2>Welcome Back</h2>
+        <form id="loginForm">
+          <label for="loginEmail">Email Address</label>
+          <input id="loginEmail" type="email" placeholder="Enter your email" required>
+
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" placeholder="Enter your password" required>
+
+          <button class="auth-btn" type="submit">Login</button>
+        </form>
+
+        <span class="auth-link" id="forgotPassword">Forgot password?</span>
+        <span class="auth-link" id="showRegister">New member? Create an account</span>
+      </section>
+
+      <!-- REGISTRATION SECTION -->
+      <section id="registerSection" class="hidden">
+        <h2>Create Account</h2>
+        <form id="registerForm">
+          <label for="registerEmail">Email Address</label>
+          <input id="registerEmail" type="email" placeholder="Enter your email" required>
+
+          <label for="registerPassword">Create Password</label>
+          <input id="registerPassword" type="password" placeholder="At least 6 characters" minlength="6" required>
+
+          <button class="auth-btn" type="submit">Register</button>
+        </form>
+
+        <span class="auth-link" id="showLogin">Already have an account? Login</span>
+      </section>
+
+      <div id="authMessage" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- BUMBLE LOGIC LAB INTERFACE -->
+  <div id="appContainer">
+    <header>
+      <div>
+        <svg width="38" height="30" viewBox="0 0 38 30">
+          <ellipse cx="17" cy="17" rx="13" ry="9" fill="#ff8a00"/>
+          <path d="M12 9v16M19 9v16M26 11v12" stroke="#000" stroke-width="4"/>
+          <ellipse cx="14" cy="6" rx="6" ry="4" fill="#fff" opacity=".9"/>
+          <circle cx="32" cy="15" r="4" fill="#ff8a00"/>
+        </svg>
+        <h1>Bumble <b>Logic Lab</b></h1>
+        <span id="pbt" style="color:#fff;font:12px sans-serif"></span>
+        <div id="pb"><i></i></div>
+        <div class="header-user">
+          <span id="memberEmail"></span>
+          <button class="logout-btn" id="logoutButton">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <aside>
+        <input id="q" placeholder="Search topics, gates, ICs…" oninput="V.q=this.value;nav()">
+        <a onclick="go('dash')" style="cursor:pointer;font:bold 14px sans-serif;display:block;margin-bottom:6px">🏠 Dashboard</a>
+        <div id="nav"></div>
+      </aside>
+      <main id="m"></main>
+    </div>
+
+    <div id="bot">
+      <div id="bp">
+        <h4>🐝 Bumble – connection helper</h4>
+        <div id="bl"></div>
+        <input id="bi" placeholder="Ask e.g. “7408 pins” or “how do I connect?”" onkeydown="if(event.key=='Enter')ask()">
+      </div>
+      <button onclick="tb()">🐝 Ask Bumble</button>
+    </div>
+  </div>
+
+  <!-- FIREBASE AUTH & ACCESS CONTROL -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import {
+      getAuth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      sendEmailVerification,
+      sendPasswordResetEmail,
+      signOut,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    // --- PASTE YOUR FIREBASE API KEY HERE ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyCl5PdDEGpyOhpxZI4Ztjb48TB9u6JHi4U",
+      authDomain: "bumble-logic-8243a.firebaseapp.com",
+      projectId: "bumble-logic-8243a",
+      appId: "1:600710819764:web:edf596462e8d49d1214ce1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const authOverlay = document.getElementById("authOverlay");
+    const loginSection = document.getElementById("loginSection");
+    const registerSection = document.getElementById("registerSection");
+    const authMessage = document.getElementById("authMessage");
+    const memberEmail = document.getElementById("memberEmail");
+
+    let registrationInProgress = false;
+
+    function showAuthMessage(text) {
+      authMessage.textContent = text;
+    }
+
+    function showAuthView(view) {
+      loginSection.classList.add("hidden");
+      registerSection.classList.add("hidden");
+      document.getElementById(view).classList.remove("hidden");
+      showAuthMessage("");
+    }
+
+    document.getElementById("showRegister").onclick = () => showAuthView("registerSection");
+    document.getElementById("showLogin").onclick = () => showAuthView("loginSection");
+
+    // Register
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("registerEmail").value.trim().toLowerCase();
+      const password = document.getElementById("registerPassword").value;
+
+      try {
+        registrationInProgress = true;
+        const result = await createUserWithEmailAndPassword(auth, email, password);
+        await sendEmailVerification(result.user);
+        await signOut(auth);
+        showAuthView("loginSection");
+        showAuthMessage("Verification email sent! Verify your email, then log in.");
+      } catch (err) {
+        showAuthMessage(err.message);
+      } finally {
+        registrationInProgress = false;
+      }
+    });
+
+    // Login
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const password = document.getElementById("loginPassword").value;
+
+      try {
+        showAuthMessage("Checking your login...");
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (err) {
+        showAuthMessage(err.message);
+      }
+    });
+
+    // Check Approval in Firestore
+    async function checkUserAccess(user) {
+      if (!user.emailVerified) {
+        showAuthMessage("Please verify your email before logging in.");
+        await signOut(auth);
+        return;
+      }
+
+      try {
+        const email = user.email.toLowerCase();
+        const approvalRef = doc(db, "approvedEmails", email);
+        const approvalSnap = await getDoc(approvalRef);
+
+        if (!approvalSnap.exists() || approvalSnap.data().approved !== true) {
+          showAuthMessage("Access denied. Your email has not been approved by the administrator.");
+          await signOut(auth);
+          return;
+        }
+
+        memberEmail.textContent = email;
+        authOverlay.classList.add("hidden");
+      } catch (err) {
+        showAuthMessage("Unable to verify access: " + err.message);
+        await signOut(auth);
+      }
+    }
+
+    // State Listener
+    onAuthStateChanged(auth, async (user) => {
+      if (registrationInProgress) return;
+      if (user) {
+        await checkUserAccess(user);
+      } else {
+        authOverlay.classList.remove("hidden");
+        showAuthView("loginSection");
+      }
+    });
+
+    // Password Reset
+    document.getElementById("forgotPassword").onclick = async () => {
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      if (!email) {
+        showAuthMessage("Enter your email address in the field first.");
+        return;
+      }
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showAuthMessage("Password reset email sent. Check your inbox.");
+      } catch (err) {
+        showAuthMessage(err.message);
+      }
+    };
+
+    // Logout
+    document.getElementById("logoutButton").onclick = async () => {
+      await signOut(auth);
+      authOverlay.classList.remove("hidden");
+      showAuthView("loginSection");
+      showAuthMessage("You have logged out.");
+    };
+  </script>
+
+  <!-- BUMBLE LOGIC LAB SIMULATOR SCRIPT -->
+  <script>
+    const $ = s => document.querySelector(s);
+    const T = [
+      ['Latches & Flip-flops','SR, D, JK, T · edge triggering','A latch is level-sensitive memory (cross-coupled NOR/NAND gates). A flip-flop copies its input only on a clock edge. D stores the input, JK holds (00), resets (01), sets (10) or toggles (11), and T is a JK with J=K.','A JK flip-flop with J=K=1 toggles Q on every falling clock edge: 0→1→0→1. Two such stages divide the clock by 4.','Registers, counters, frequency dividers, switch debouncing (SR latch), CPU pipeline stages.','What does a JK flip-flop do when J=K=1?','Toggles on the clock edge','Resets to 0','Holds its state'],
+      ['Logic Gates','AND, OR, NOT, NAND, NOR, XOR · ICs 7408 7432 7404 7400 7402 7486','Gates implement Boolean functions. NAND and NOR are universal: any circuit can be built from either one. Every TTL chip needs +5V on Vcc and 0V on GND.','NAND: Y = (A·B)\'. Output is 0 only when A=B=1. De Morgan: (A·B)\' = A\' + B\'.','Alarm logic, address decoding, safety interlocks, every CPU.','Which gate output is 1 only when its inputs differ?','XOR','NOR','AND'],
+      ['Adders & Subtractors','Half/full adder, half/full subtractor','Half adder: Sum = A⊕B, Carry = AB. Full adder: Sum = A⊕B⊕C, Carry = AB + C(A⊕B). Half subtractor: Diff = A⊕B, Borrow = A\'B. Full subtractor: Diff = A⊕B⊕C, Borrow = A\'B + (A⊕B)\'C.','1 + 1 + 1 (A=B=C=1): Sum = 1, Carry = 1 (binary 11).','ALU arithmetic, counters, address calculation, checksum hardware.','Carry of a half adder is…','A AND B','A XOR B','A OR B'],
+      ['Multiplexers & Demultiplexers','4:1 MUX, 1:4 DEMUX','A MUX selects one of 2ⁿ inputs using n select lines: Y = D0S1\'S0\' + D1S1\'S0 + D2S1S0\' + D3S1S0. A DEMUX does the reverse and routes one input to one of 2ⁿ outputs.','S1S0 = 10 on a 4:1 MUX passes D2 to Y.','Telephone line sharing, data routing in CPUs, memory addressing, serial links.','How many select lines does an 8:1 MUX need?','3','2','8'],
+      ['Parallel Adder / Subtractor (IC 7483)','4-bit adder, add/sub with XORs','The 7483 adds two 4-bit numbers plus carry-in C0. For A−B, XOR each B bit with mode M and set C0=M: B is inverted and 1 is added (two\'s complement). M=0 adds, M=1 subtracts.','1101 + 1011 = 11000 (S=1000, C4=1). 1101 − 1011 = 0010.','Calculator chips, ALUs, DSP address units.','For subtraction using 7483, C0 must be…','1','0','Floating'],
+      ['Magnitude Comparators','2-bit gates, 4/8-bit IC 7485','A comparator outputs A>B, A=B, A<B. A=B uses XNOR of each bit pair. The 7485 compares 4 bits; for 8 bits cascade the low-order IC outputs into the cascade inputs of the high-order IC. (Comparators are combinational, no flip-flops.)','A=1011, B=1001: bit 1 is the first difference (1>0) so A>B.','Sorting hardware, thermostats, ADC threshold detection, priority arbiters.','Which IC compares two 4-bit numbers?','7485','7483','7476'],
+      ['Encoders & Decoders','4:2 priority encoder, 2:4 decoder','Encoder: A1 = Y3+Y2, A0 = Y3 + Y2\'Y1, V = Y3+Y2+Y1+Y0 (valid). Decoder: 2 inputs activate exactly one of 4 outputs (minterms).','Y2 and Y1 pressed together: priority gives A1A0 = 10.','Keyboards, interrupt controllers, memory chip-select, 7-segment drivers.','A 2:4 decoder activates how many outputs at once?','One','Two','All four'],
+      ['Counters (Ripple)','Mod-4, mod-16, mod-10, mod-12 with JK flip-flops','In an asynchronous counter, each flip-flop (J=K=1) is clocked by the previous Q, so each stage divides by 2. Mod-N counters stop at N by NAND-ing the outputs that are 1 at count N and feeding the result to CLEAR. Mod-4: 2 flip-flops. Mod-10: clear at 1010 (QD·QB). Mod-12: clear at 1100 (QD·QC).','Mod-10 runs 0000→1001, then at 1010 the NAND clears everything to 0000.','Digital clocks, frequency dividers, event counters, timers.','Which outputs are NAND-ed to build a mod-12 counter?','QD and QC','QD and QB','QA and QB'],
+      ['Shift Registers','SISO, SIPO, PISO, PIPO with D flip-flops','D flip-flops are cascaded sharing one clock; each clock moves data one position. Serial-in/parallel-out turns a serial stream into a word; parallel-in/serial-out does the reverse.','Shift 1,0,0,1 into SIPO: after 4 clocks outputs show the 4 bits side by side.','UART serial links, LED drivers, keyboard scanning, delay lines.','A SIPO register converts…','Serial data to parallel','Parallel to serial','Analog to digital'],
+      ['FSM – Sequence Detector (Verilog)','Moore machine, 3+ consecutive 1s','An FSM has states, transitions and outputs. In a Moore machine the output depends only on the state. Verilog uses a state register (always @(posedge clk)), next-state logic (always @(*)) and output logic.','Input 0111 1 0: states S0→S0→S1→S2→S3→S3→S0, output y=1 in S3.','Protocol decoders, vending machines, traffic lights, packet framing.','In a Moore FSM the output depends on…','Current state only','State and input','Input only'],
+      ['RAM (Verilog)','1024 × 8-bit synchronous RAM','RAM stores data addressed by a 10-bit address: 2¹⁰ = 1024 words of 8 bits. In Verilog: reg [7:0] mem [0:1023]; on posedge clk write if write_enable else read.','Write 0xA5 to address 3, then read address 3 returns 0xA5.','Main memory, caches, frame buffers, FIFOs.','How many address bits for 1024 words?','10','8','1024']
+    ];
+
+    const Q = [[1,2,3],[4,5,6],[9,10,8],[12,13,11]], QN = [[2,3,1],[5,6,4],[8,9,10],[11,12,13]];
+    const q2 = (t, l) => l.map(([a, b, y]) => [t, [a, b], y]);
+    function mk(n, np, v, g, gates, x, o) {
+      const pn = Array(np + 1).fill('');
+      pn[v] = 'Vcc'; pn[g] = 'GND';
+      gates.forEach(([t, i, y], k) => { i.forEach((p, j) => pn[p] = (k + 1) + 'ABC'[j]); pn[y] = (k + 1) + 'Y'; });
+      Object.assign(pn, x || {});
+      return { n, np, v, g, gates, pn, ...o };
+    }
+    const G = { and: a => +a.every(x => x), or: a => +a.some(x => x), nand: a => +!a.every(x => x), nor: a => +!a.some(x => x), xor: a => a[0] ^ a[1], not: a => +!a[0] };
+    const IC = {
+      '7400': mk('Quad 2-input NAND', 14, 14, 7, q2('nand', Q)),
+      '7402': mk('Quad 2-input NOR', 14, 14, 7, q2('nor', QN)),
+      '7404': mk('Hex inverter', 14, 14, 7, [[1,2],[3,4],[5,6],[9,8],[11,10],[13,12]].map(([a, y]) => ['not', [a], y])),
+      '7408': mk('Quad 2-input AND', 14, 14, 7, q2('and', Q)),
+      '7432': mk('Quad 2-input OR', 14, 14, 7, q2('or', Q)),
+      '7486': mk('Quad 2-input XOR', 14, 14, 7, q2('xor', Q)),
+      '7411': mk('Triple 3-input AND', 14, 14, 7, [['and',[1,2,13],12],['and',[3,4,5],6],['and',[9,10,11],8]]),
+      '7483': mk('4-bit binary full adder', 16, 5, 12, [], {1:'A4',2:'S3',3:'A3',4:'B3',6:'S2',7:'B2',8:'A2',9:'S1',10:'A1',11:'B1',13:'C0',14:'C4',15:'S4',16:'B4'}, { fn: L => { let a=0, b=0; [10,8,3,1].forEach((p,i)=>a|=L(p)<<i); [11,7,4,16].forEach((p,i)=>b|=L(p)<<i); const s=a+b+L(13), o={}; [9,6,2,15].forEach((p,i)=>o[p]=s>>i&1); o[14]=s>>4&1; return o; } }),
+      '7485': mk('4-bit magnitude comparator', 16, 16, 8, [], {1:'B3',2:'A<Bin',3:'A=Bin',4:'A>Bin',5:'A>B',6:'A=B',7:'A<B',9:'B0',10:'A0',11:'B1',12:'A1',13:'A2',14:'B2',15:'A3'}, { fn: L => { let a=0, b=0; [10,12,13,15].forEach((p,i)=>a|=L(p)<<i); [9,11,14,1].forEach((p,i)=>b|=L(p)<<i); return a==b?{5:L(4),6:L(3),7:L(2)}:{5:+(a>b),6:0,7:+(a<b)}; } }),
+      '7474': mk('Dual D flip-flop (rising edge)', 14, 14, 7, [], {1:'1CLR',2:'1D',3:'1CLK',4:'1PRE',5:'1Q',6:"1Q'",8:"2Q'",9:'2Q',10:'2PRE',11:'2CLK',12:'2D',13:'2CLR'}, { ff: [{e:'r',clk:3,d:2,p:4,c:1,q:5,n:6},{e:'r',clk:11,d:12,p:10,c:13,q:9,n:8}] }),
+      '7476': mk('Dual JK flip-flop (falling edge)', 16, 5, 13, [], {1:'1CLK',2:'1PRE',3:'1CLR',4:'1J',6:'2CLK',7:'2PRE',8:'2CLR',9:'2J',10:"2Q'",11:'2Q',12:'2K',14:"1Q'",15:'1Q',16:'1K'}, { ff: [{e:'f',clk:1,j:4,k:16,p:2,c:3,q:15,n:14},{e:'f',clk:6,j:9,k:12,p:7,c:8,q:11,n:10}] })
+    };
+    const CL = [...Object.keys(IC).map(k => ({ l: k + ' – ' + IC[k].n, t: 'IC', k })), { l: 'Switch (input) – toggle 0/1', t: 'SW' }, { l: 'LED (output)', t: 'LED' }, { l: 'Clock push-button (CLK)', t: 'CLK' }];
+
+    const num = (i, s) => i[s] | i[s+1]<<1 | i[s+2]<<2 | i[s+3]<<3;
+    const TK = [
+      { tp: 1, n: 'NAND gate (7400) – try other gates the same way', ic: ['7400'], ns: 2, nl: 1, fn: ([a,b]) => [!(a&b)], g: ['Add 7400, 2 switches (SW1,SW2) and 1 LED.','Power: +5V rail → 7400 pin 14, GND rail → pin 7.','SW1 → pin 1, SW2 → pin 2, pin 3 → LED1.','Toggle switches and press Verify. For 7408/7432/7486 gate 1 uses the same pins 1,2→3; 7402 uses pins 2,3→1; 7404 uses 1→2.'] },
+      { tp: 2, n: 'Half adder (7486 + 7408)', ns: 2, nl: 2, fn: ([a,b]) => [a^b, a&b], g: ['Add 7486, 7408, SW×2, LED×2. Power both ICs (Vcc 14, GND 7).','SW1 → 7486 pin 1 and 7408 pin 1; SW2 → 7486 pin 2 and 7408 pin 2.','7486 pin 3 (Sum) → LED1; 7408 pin 3 (Carry) → LED2.','Sum = A⊕B, Carry = AB. K-map: Carry has one 1 at A=B=1; Sum has 1s at 01 and 10.'] },
+      { tp: 2, n: 'Full adder (7486 + 7408 + 7432)', ns: 3, nl: 2, fn: ([a,b,c]) => [a^b^c, (a&b)|(c&(a^b))], g: ['Add 7486, 7408, 7432, SW×3, LED×2; power all three (14/7).','SW1 → 7486 p1, 7408 p1. SW2 → 7486 p2, 7408 p2.','7486 p3 → 7486 p4 and 7408 p4. SW3 → 7486 p5 and 7408 p5.','7486 p6 → LED1 (Sum). 7408 p3 → 7432 p1; 7408 p6 → 7432 p2; 7432 p3 → LED2 (Carry).','Sum = A⊕B⊕C, Carry = AB + BC + AC.'] },
+      { tp: 2, n: 'Half subtractor (7486 + 7404 + 7408)', ns: 2, nl: 2, fn: ([a,b]) => [a^b, !a&b], g: ['Add 7486, 7404, 7408, SW×2, LED×2; power all (14/7).','SW1 → 7486 p1 and 7404 p1; SW2 → 7486 p2 and 7408 p2.','7404 p2 (A\') → 7408 p1.','7486 p3 → LED1 (Difference); 7408 p3 → LED2 (Borrow = A\'B).'] },
+      { tp: 2, n: 'Full subtractor (7486 + 7404 + 7408 + 7432)', ns: 3, nl: 2, fn: ([a,b,c]) => [a^b^c, (!a&b)|(!(a^b)&c)], g: ['Add 7486, 7404, 7408, 7432, SW×3, LED×2; power all.','SW1 → 7486 p1, 7404 p1. SW2 → 7486 p2, 7408 p2. 7404 p2 → 7408 p1.','7486 p3 → 7486 p4 and 7404 p3. SW3 → 7486 p5 and 7408 p5. 7404 p4 → 7408 p4.','7486 p6 → LED1 (Diff). 7408 p3 → 7432 p1; 7408 p6 → 7432 p2; 7432 p3 → LED2 (Borrow).'] },
+      { tp: 3, n: '4:1 Multiplexer (7404 + 2×7411 + 7432)', ns: 6, nl: 1, fn: ([d0,d1,d2,d3,s1,s0]) => [[d0,d1,d2,d3][s1*2+s0]], g: ['Add 7404, two 7411, one 7432, 6 switches (SW1–SW4 = D0–D3, SW5 = S1, SW6 = S0), 1 LED. Power all four ICs.','S1 → 7404 p1 (p2 = S1\'); S0 → 7404 p3 (p4 = S0\').','7411 #1 gate1 (p1,p2,p13→12): D0, S1\', S0\'. gate2 (p3,p4,p5→6): D1, S1\', S0. gate3 (p9,p10,p11→8): D2, S1, S0\'. 7411 #2 gate1 (p1,p2,p13→12): D3, S1, S0.','OR tree: 7411#1 p12 → 7432 p1; 7411#1 p6 → 7432 p2; 7432 p3 → 7432 p9; 7411#1 p8 → 7432 p4; 7411#2 p12 → 7432 p5; 7432 p6 → 7432 p10; 7432 p8 → LED1.'] },
+      { tp: 3, n: '1:4 Demultiplexer (7404 + 2×7411)', ns: 3, nl: 4, fn: ([i,s1,s0]) => [0,1,2,3].map(k => i && (s1*2+s0) == k), g: ['Add 7404, two 7411, SW×3 (SW1 = I/P, SW2 = S1, SW3 = S0), LED×4 (D0–D3). Power all.','S1 → 7404 p1; S0 → 7404 p3. I/P goes to the first input of every AND.','7411#1 gate1 (p1,p2,p13): I, S1\', S0\' → p12 → LED1. gate2 (p3,p4,p5): I, S1\', S0 → p6 → LED2. gate3 (p9,p10,p11): I, S1, S0\' → p8 → LED3.','7411#2 gate1 (p1,p2,p13): I, S1, S0 → p12 → LED4.'] },
+      { tp: 4, n: '4-bit adder/subtractor (7483 + 7486)', ns: 9, nl: 5, fn: i => { const a=num(i,0), b=num(i,4), t=i[8]?a+(15-b)+1:a+b; return [t&1, t>>1&1, t>>2&1, t>>3&1, t>>4&1]; }, g: ['Add 7483, 7486, 9 switches (SW1–4 = A1–A4, SW5–8 = B1–B4, SW9 = M), 5 LEDs (S1–S4, C4). Power: 7483 Vcc pin 5 / GND pin 12; 7486 Vcc 14 / GND 7.','A1..A4 → 7483 pins 10, 8, 3, 1.','B1..B4 → 7486 pins 1, 4, 9, 12. M → 7486 pins 2, 5, 10, 13 and 7483 pin 13 (C0).','7486 p3 → 7483 p11; p6 → p7; p8 → p4; p11 → p16.','Outputs: 7483 pins 9, 6, 2, 15 → LED1–4 (S1–S4); pin 14 (C4) → LED5. M=0 adds, M=1 subtracts (C4=1 means no borrow).'] },
+      { tp: 5, n: '4-bit comparator (7485)', ns: 8, nl: 3, fn: i => { const a=num(i,0), b=num(i,4); return [a>b, a==b, a<b]; }, g: ['Add 7485, 8 switches (SW1–4 = A0–A3, SW5–8 = B0–B3), 3 LEDs. Power: Vcc pin 16, GND pin 8.','A0..A3 → pins 10, 12, 13, 15. B0..B3 → pins 9, 11, 14, 1.','Cascade inputs: pin 3 (A=B in) → +5V; pins 2 and 4 → GND.','Pin 5 (A>B) → LED1, pin 6 (A=B) → LED2, pin 7 (A<B) → LED3.','8-bit: use two 7485. Wire the low IC outputs 5,6,7 to the high IC inputs 4,3,2; tie the low IC cascade inputs as above.'] },
+      { tp: 6, n: '4:2 priority encoder (7404 + 7408 + 7432)', ns: 4, nl: 3, fn: ([y3,y2,y1,y0]) => [y3|y2, y3|(!y2&y1), y3|y2|y1|y0], g: ['Add 7404, 7408, 7432, SW×4 (SW1 = Y3 … SW4 = Y0), LED×3 (A1, A0, V). Power all.','Y3 → 7432 p1 and p4. Y2 → 7432 p2 and 7404 p1. 7404 p2 → 7408 p1. Y1 → 7408 p2 and 7432 p9. Y0 → 7432 p10.','7408 p3 → 7432 p5. 7432 p3 (A1) → LED1 and 7432 p12. 7432 p6 (A0) → LED2.','7432 p8 → 7432 p13; 7432 p11 (V) → LED3.'] },
+      { tp: 6, n: '2:4 decoder (7404 + 7408)', ns: 2, nl: 4, fn: ([a1,a0]) => [a1&a0, a1&!a0, !a1&a0, !a1&!a0], g: ['Add 7404, 7408, SW×2 (SW1 = A1, SW2 = A0), LED×4 (Y3…Y0). Power both.','A1 → 7404 p1, 7408 p1, 7408 p4. A0 → 7404 p3, 7408 p2, 7408 p10.','7404 p2 (A1\') → 7408 p9 and p12. 7404 p4 (A0\') → 7408 p5 and p13.','7408 p3 → LED1 (Y3), p6 → LED2 (Y2), p8 → LED3 (Y1), p11 → LED4 (Y0).'] },
+      { tp: 7, n: 'Ripple counters: mod-16 / mod-10 / mod-12 / mod-4 (2×7476 + 7400)', ns: 0, nl: 4, g: ['Add two 7476, 7400, CLK button, 4 LEDs. Power 7476: Vcc pin 5, GND pin 13. 7400: Vcc 14, GND 7.','Unused J, K, PRE, CLR pins float HIGH (TTL), so J=K=1 needs no wire. For tidy wiring tie J (4, 9), K (16, 12), PRE (2, 7), CLR (3, 8) to +5V.','CLK button → IC1 pin 1. IC1 Q1 (p15) → IC1 pin 6. IC1 Q2 (p11) → IC2 pin 1. IC2 Q1 (p15) → IC2 pin 6.','LEDs: QA = IC1 p15, QB = IC1 p11, QC = IC2 p15, QD = IC2 p11. Press the clock and compare with the truth table (counts 0–15).','Mod-4: use only IC1 (QA, QB) and clear at count 4 – or just 2 stages. Mod-10: 7400 p1 ← QB, p2 ← QD; p3 → all CLR pins (3, 8 of both ICs). Mod-12: 7400 p1 ← QC, p2 ← QD; p3 → all CLR pins.'] },
+      { tp: 8, n: 'Shift register SIPO (2×7474)', ns: 1, nl: 4, g: ['Add two 7474, SW×1 (DATA), CLK button, LED×4. Power both (Vcc 14, GND 7). PRE/CLR may float high.','DATA → U1 p2 (1D). CLK → U1 p3, U1 p11, U2 p3, U2 p11.','U1 p5 (1Q) → U1 p12 (2D). U1 p9 (2Q) → U2 p2. U2 p5 → U2 p12.','LEDs: U1 p5, U1 p9, U2 p5, U2 p9. Set DATA, press CLK, repeat: data moves one stage per clock.'] }
+    ];
+
+    let V = { v: 'dash', i: 0, q: '', qi: 0, sc: 0, ci: 0, fl: 0, list: [], opts: [], ans: null };
+    let P = { done: {}, ver: {}, best: 0 };
+    try { P = JSON.parse(localStorage.getItem('bll')) || P; } catch (e) {}
+    const save = () => { try { localStorage.setItem('bll', JSON.stringify(P)); } catch (e) {} };
+    const RN = 26;
+    let S;
+
+    function resetSim() {
+      S = { comps: [], wires: [], sw: {}, ff: {}, prev: {}, sel: null, pend: null, hist: [], fut: [], task: null, n: 0, clk: null, D: {}, f: x => x, short: false, tilt: true };
+    }
+
+    function go(v, i) {
+      V.v = v; if (i !== undefined) V.i = i; render();
+    }
+
+    function nav() {
+      const q = V.q.toLowerCase();
+      $('#nav').innerHTML = T.map((t, i) => [t, i])
+        .filter(([t]) => !q || t.join(' ').toLowerCase().includes(q) || Object.keys(IC).some(k => q.includes(k) && t.join(' ').includes(k)))
+        .map(([t, i]) => `<a class="${V.v != 'dash' && V.i == i ? 'on' : ''}" onclick="go('topic',${i})">${P.done[i] ? '✓' : '○'} ${t[0]}</a>`).join('') || '<i>No topic matches.</i>';
+    }
+
+    function render() {
+      nav();
+      const d = Object.keys(P.done).length, vf = Object.keys(P.ver).length, pc = Math.round(100 * (d + vf) / (T.length + TK.filter(t => t.fn).length));
+      $('#pb i').style.width = pc + '%';
+      $('#pbt').textContent = pc + '% complete';
+      const m = $('#m');
+      ({ dash, topic, quiz, cards, sim: sim_wrap }[V.v])(m);
+    }
+
+    function dash(m) {
+      m.innerHTML = `<h2>Dashboard</h2><div class="row"><div class="c"><div class="stat">${Object.keys(P.done).length}/${T.length}</div>topics completed</div><div class="c"><div class="stat">${Object.keys(P.ver).length}/${TK.filter(t => t.fn).length}</div>circuits verified</div><div class="c"><div class="stat">${P.best}/${T.length}</div>best quiz score</div></div><p><button onclick="startQuiz(T.map((_,i)=>i))">Quiz: all topics</button> <button class="alt" onclick="startCards(T.map((_,i)=>i))">Flashcards: all topics</button></p><div class="cards">${T.map((t, i) => `<div class="c"><h3>${P.done[i] ? '✓ ' : ''}${t[0]}</h3><small>${t[1]}</small><p><button onclick="go('topic',${i})">Learn</button> <button class="alt" onclick="openSim(${i})">Let's simulate</button></p></div>`).join('')}</div>`;
+    }
+
+    function tabs(i) {
+      return `<div class="tabs"><button onclick="go('topic',${i})">Learn</button><button class="alt" onclick="startQuiz([${i}])">Quiz</button><button class="alt" onclick="startCards([${i}])">Flashcards</button><button class="alt" onclick="openSim(${i})">🐝 Let's simulate</button></div>`;
+    }
+
+    function topic(m) {
+      const t = T[V.i];
+      m.innerHTML = `<h2>${t[0]}</h2><i>${t[1]}</i>${tabs(V.i)}<div class="box"><b>Concept.</b> ${t[2]}</div><div class="box"><b>Example.</b> ${t[3]}</div><div class="box"><b>Real-time application.</b> ${t[4]}</div><button onclick="P.done[${V.i}]=1;save();render()">${P.done[V.i] ? 'Completed ✓' : 'Mark as complete'}</button>`;
+    }
+
+    function startQuiz(l) { V.list = l; V.qi = 0; V.sc = 0; V.ans = null; V.v = 'quiz'; newQ(); render(); }
+    function newQ() { const t = T[V.list[V.qi]]; if (t) V.opts = [t[6], t[7], t[8]].sort(() => Math.random() - .5); }
+    function pick(o) { if (V.ans !== null) return; V.ans = o; if (o == T[V.list[V.qi]][6]) V.sc++; render(); }
+    function nextQ() { V.qi++; V.ans = null; newQ(); if (V.qi >= V.list.length && V.list.length > 1 && V.sc > P.best) { P.best = V.sc; save(); } render(); }
+
+    function quiz(m) {
+      const t = T[V.list[V.qi]];
+      if (!t) {
+        m.innerHTML = `<h2>Score ${V.sc}/${V.list.length}</h2><button onclick="startQuiz(V.list)">Retry</button> <button class="alt" onclick="go('dash')">Dashboard</button>`;
+        return;
+      }
+      m.innerHTML = `<h2>Quiz ${V.qi + 1}/${V.list.length}</h2><p><b>${t[0]}:</b> ${t[5]}</p>` + V.opts.map((o, k) => `<button class="opt ${V.ans !== null ? (o == t[6] ? 'ok' : o == V.ans ? 'no' : '') : ''}" onclick="pick(V.opts[${k}])">${o}</button>`).join('') + (V.ans !== null ? `<p>${V.ans == t[6] ? 'Correct!' : 'Not quite – the answer is “' + t[6] + '”.'}</p><button onclick="nextQ()">Next</button>` : '');
+    }
+
+    function startCards(l) { V.cl = l; V.ci = 0; V.fl = 0; V.v = 'cards'; render(); }
+    function cards(m) {
+      const t = T[V.cl[V.ci]];
+      m.innerHTML = `<h2>Flashcards ${V.ci + 1}/${V.cl.length}</h2><div class="fc" onclick="V.fl^=1;render()">${V.fl ? t[6] : '<div><small>' + t[0] + '</small><br>' + t[5] + '</div>'}</div><p><button class="alt" onclick="V.ci=(V.ci+V.cl.length-1)%V.cl.length;V.fl=0;render()">Prev</button> <button onclick="V.ci=(V.ci+1)%V.cl.length;V.fl=0;render()">Next</button> <small>Tap card to flip</small></p>`;
+    }
+
+    function openSim(i) {
+      resetSim(); V.i = i; V.v = 'sim'; const tp = i == 0 ? 7 : i; S.task = TK.find(t => t.tp == tp) || TK[0]; render();
+    }
+    const snap = () => { S.hist.push(JSON.stringify([S.comps, S.wires])); S.fut = []; };
+    function undo() { if (!S.hist.length) return; S.fut.push(JSON.stringify([S.comps, S.wires])); [S.comps, S.wires] = JSON.parse(S.hist.pop()); S.pend = null; sim(); draw(); }
+    function redo() { if (!S.fut.length) return; S.hist.push(JSON.stringify([S.comps, S.wires])); [S.comps, S.wires] = JSON.parse(S.fut.pop()); sim(); draw(); }
+
+    function sim() {
+      const P0 = {}; const f = x => { if (P0[x] === undefined) P0[x] = x; return P0[x] === x ? x : (P0[x] = f(P0[x])); };
+      const u = (a, b) => { P0[f(a)] = f(b); };
+      S.wires.forEach(([a, b]) => u(a, b));
+      for (let i = 0; i < RN; i++) { u('V:0', 'V:' + i); u('G:0', 'G:' + i); }
+      const D = {}; D[f('V:0')] = 1; S.short = f('V:0') == f('G:0'); if (!S.short) D[f('G:0')] = 0;
+      S.comps.forEach(c => {
+        if (c.t == 'SW' || c.t == 'CLK') D[f(c.id + '.o')] = S.sw[c.id] ? 1 : 0;
+        if (c.t == 'IC') { (IC[c.k].ff || []).forEach((F, i) => { const q = S.ff[c.id + i] || 0; D[f(c.id + '.' + F.q)] = q; D[f(c.id + '.' + F.n)] = 1 - q; }); }
+      });
+      const lv = p => { const v = D[f(p)]; return v === undefined ? 1 : v; };
+      for (let it = 0; it < 60; it++) {
+        let ch = 0; const set = (p, v) => { const r = f(p); v = +v; if (D[r] !== v) { D[r] = v; ch = 1; } };
+        for (const c of S.comps) {
+          if (c.t != 'IC') continue;
+          const d = IC[c.k];
+          if (!(D[f(c.id + '.' + d.v)] === 1 && D[f(c.id + '.' + d.g)] === 0)) continue;
+          const L = n => lv(c.id + '.' + n);
+          d.gates.forEach(([t, ins, o]) => set(c.id + '.' + o, G[t](ins.map(L))));
+          if (d.fn) for (const [p, v] of Object.entries(d.fn(L))) set(c.id + '.' + p, v);
+          (d.ff || []).forEach((F, i) => {
+            const key = c.id + i; let q = S.ff[key] || 0; const ck = L(F.clk), pv = S.prev[key];
+            if (pv !== undefined && (F.e == 'r' ? pv == 0 && ck == 1 : pv == 1 && ck == 0)) {
+              if (F.d) q = L(F.d); else { const j = L(F.j), k = L(F.k); q = j && k ? 1 - q : j ? 1 : k ? 0 : q; }
+            }
+            S.prev[key] = ck;
+            if (!L(F.c)) q = 0; else if (!L(F.p)) q = 1;
+            if (q !== (S.ff[key] || 0)) { S.ff[key] = q; ch = 1; }
+            set(c.id + '.' + F.q, q); set(c.id + '.' + F.n, 1 - q);
+          });
+        }
+        if (!ch) break;
+      }
+      S.D = D; S.f = f; S.lv0 = p => D[f(p)] || 0;
+    }
+
+    function add(i) {
+      snap(); const c = CL[i], id = 'c' + (S.n++), k = S.comps.filter(x => x.t == c.t).length + 1;
+      S.comps.push({ id, t: c.t, k: c.k, nm: c.t == 'IC' ? 'U' + k : c.t == 'LED' ? 'LED' + k : c.t == 'SW' ? 'SW' + k : 'CLK' });
+      S.sw[id] = 0; if (c.t == 'IC') S.sel = id; sim(); draw();
+    }
+
+    function layout() {
+      const pm = {}; for (let i = 0; i < RN; i++) { pm['V:' + i] = [30 + i * 22, 22]; pm['G:' + i] = [30 + i * 22, 50]; }
+      let ux = 30, bx = 30;
+      S.comps.forEach(c => {
+        if (c.t == 'IC') {
+          const d = IC[c.k], h = d.np / 2; c.X = ux; ux += 120;
+          for (let p = 1; p <= d.np; p++) pm[c.id + '.' + p] = p <= h ? [c.X, 120 + (p - 1) * 22] : [c.X + 80, 120 + (d.np - p) * 22];
+        } else {
+          c.X = bx; bx += 75; pm[c.id + '.' + (c.t == 'LED' ? 'i' : 'o')] = [c.X + 25, 335];
+        }
+      });
+      return [pm, Math.max(ux, bx, RN * 22 + 60)];
+    }
+
+    function draw() {
+      const [pm, W] = layout(), f = S.f, D = S.D;
+      const col = p => { const v = D[f(p)]; return v === 1 ? '#ff8a00' : v === 0 ? '#000' : '#999'; };
+      let s = `<svg width="${W}" height="420" font-family="monospace">`;
+      s += `<rect x="14" y="8" width="${RN * 22 + 30}" height="26" rx="4" fill="#ffe2bd"/><rect x="14" y="36" width="${RN * 22 + 30}" height="26" rx="4" fill="#ddd"/><text x="${RN * 22 + 48}" y="26" font-size="12" font-weight="bold" fill="#e07000">+5V</text><text x="${RN * 22 + 48}" y="54" font-size="12" font-weight="bold">GND</text>`;
+      S.comps.forEach(c => {
+        if (c.t == 'IC') {
+          const d = IC[c.k], h = d.np / 2, H = (h - 1) * 22 + 34;
+          s += `<g data-ic="${c.id}" style="cursor:pointer"><rect x="${c.X + 10}" y="104" width="60" height="${H}" rx="4" fill="${S.sel == c.id ? '#e07000' : '#000'}"/><path d="M${c.X + 30} 104a10 10 0 0 0 20 0" fill="#fffaf0"/><text x="${c.X + 40}" y="${104 + H / 2}" fill="#fff" font-size="12" text-anchor="middle">${c.k}</text><text x="${c.X + 40}" y="${118 + H / 2}" fill="#ffd9a0" font-size="11" text-anchor="middle">${c.nm}</text>`;
+          for (let p = 1; p <= d.np; p++) {
+            const [x, y] = pm[c.id + '.' + p];
+            s += `<text x="${p <= h ? x + 14 : x - 14}" y="${y + 4}" fill="#fff" font-size="10" text-anchor="middle">${p}</text>`;
+          }
+          s += '</g>';
+        } else if (c.t == 'SW') {
+          s += `<g data-sw="${c.id}" style="cursor:pointer"><rect x="${c.X}" y="350" width="50" height="34" rx="6" fill="${S.sw[c.id] ? '#ff8a00' : '#fff'}" stroke="#000" stroke-width="2"/><text x="${c.X + 25}" y="371" font-size="12" text-anchor="middle">${c.nm}=${S.sw[c.id] ? 1 : 0}</text></g>`;
+        } else if (c.t == 'CLK') {
+          s += `<g data-clk="${c.id}" style="cursor:pointer"><rect x="${c.X}" y="350" width="50" height="34" rx="17" fill="${S.sw[c.id] ? '#ff8a00' : '#000'}" stroke="#000" stroke-width="2"/><text x="${c.X + 25}" y="371" font-size="12" fill="${S.sw[c.id] ? '#000' : '#ff8a00'}" text-anchor="middle">CLK</text></g>`;
+        } else {
+          const on = S.lv0 && S.lv0(c.id + '.i');
+          s += `<circle cx="${c.X + 25}" cy="368" r="15" fill="${on ? '#ff8a00' : '#eee'}" stroke="#000" stroke-width="2"/><text x="${c.X + 25}" y="404" font-size="11" text-anchor="middle">${c.nm}</text>`;
+        }
+      });
+      S.wires.forEach(([a, b], i) => {
+        const [x1, y1] = pm[a], [x2, y2] = pm[b];
+        s += `<path data-w="${i}" d="M${x1} ${y1}Q${(x1 + x2) / 2} ${Math.max(y1, y2) + 30 + (i % 5) * 6} ${x2} ${y2}" fill="none" stroke="${col(a)}" stroke-width="3" style="cursor:not-allowed" opacity=".85"/>`;
+      });
+      Object.entries(pm).forEach(([p, [x, y]]) => s += `<circle class="pin" data-p="${p}" cx="${x}" cy="${y}" r="${p[1] == ':' ? 5 : 6}" fill="${S.pend == p ? '#ff8a00' : '#bbb'}" stroke="#000" stroke-width="1.5"/>`);
+      $('#svgw').innerHTML = s + '</svg>';
+      const c = S.comps.find(x => x.id == S.sel);
+      $('#pc').innerHTML = c ? `<b>${c.nm}: IC ${c.k}</b> pin configuration<br>` + IC[c.k].pn.map((x, i) => i && x ? i + ':' + x : '').filter(Boolean).join('  ') : 'Click an IC to see its pin configuration here.';
+      if (!S.msgFixed) $('#msg').textContent = S.short ? '⚠ Short circuit: +5V is connected to GND. Undo the last wire.' : S.pend ? 'Wire started at ' + S.pend.replace('.', ' pin ') + ' – click the second pin.' : '';
+      $('#st').innerHTML = S.task.g.map(x => `<li>${x}</li>`).join('');
+    }
+
+    function msg(t) { S.msgFixed = 1; $('#msg').textContent = t; setTimeout(() => S.msgFixed = 0, 6000); }
+
+    function verify() {
+      const t = S.task; if (!t.fn) return msg('Sequential circuit: press CLK and compare the LEDs with the truth table (use the task steps).');
+      const sw = S.comps.filter(c => c.t == 'SW'), led = S.comps.filter(c => c.t == 'LED');
+      if (sw.length < t.ns || led.length < t.nl) return msg(`Add ${t.ns} switches and ${t.nl} LEDs first.`);
+      const old = { ...S.sw }; let bad = null;
+      for (let m = 0; m < 1 << t.ns && !bad; m++) {
+        const inp = [];
+        for (let i = 0; i < t.ns; i++) { inp[i] = m >> i & 1; S.sw[sw[i].id] = inp[i]; }
+        sim();
+        const exp = t.fn(inp).map(Number), got = led.slice(0, t.nl).map(c => +S.lv0(c.id + '.i'));
+        if (exp.join() != got.join()) bad = [inp, exp, got];
+      }
+      S.sw = old; sim(); draw();
+      if (bad) msg(`✗ Inputs ${bad[0].join('')} should give ${bad[1].join('')} but LEDs show ${bad[2].join('')}. Check power pins and wires – ask Bumble.`);
+      else { msg('✓ All ' + (1 << t.ns) + ' input combinations match the truth table!'); P.ver[t.n] = 1; save(); render0(); }
+    }
+
+    function render0() {
+      const d = Object.keys(P.done).length, vf = Object.keys(P.ver).length;
+      $('#pb i').style.width = Math.round(100 * (d + vf) / (T.length + TK.filter(t => t.fn).length)) + '%';
+    }
+
+    function ttable() {
+      const t = S.task; if (!t.fn || t.ns > 4) return '';
+      let h = '<table><tr><th>' + Array.from({ length: t.ns }, (_, i) => 'SW' + (i + 1)).join('<th>') + '<th>→<th>' + Array.from({ length: t.nl }, (_, i) => 'LED' + (i + 1)).join('<th>') + '</tr>';
+      for (let m = 0; m < 1 << t.ns; m++) {
+        const inp = Array.from({ length: t.ns }, (_, i) => m >> (t.ns - 1 - i) & 1);
+        h += '<tr><td>' + inp.join('<td>') + '<td><td>' + t.fn(inp).map(Number).join('<td>');
+      }
+      return h + '</table>';
+    }
+
+    function sr() {
+      const q = $('#cs').value.toLowerCase();
+      $('#sr').innerHTML = q ? CL.map((c, i) => [c, i]).filter(([c]) => c.l.toLowerCase().includes(q)).slice(0, 6).map(([c, i]) => `<button onclick="add(${i})">＋ ${c.l}</button>`).join('') : '';
+    }
+
+    function sim_(m) {
+      if (V.i == 8 || V.i == 9) { verilog(m); return; }
+      const tp = V.i == 0 ? 7 : V.i, L = TK.filter(t => t.tp == tp);
+      if (!S || !S.task || S.task.tp != tp && !L.includes(S.task)) openSim(V.i);
+      m.innerHTML = `<h2>Let's simulate: ${T[V.i][0]}</h2>${tabs(V.i)}<div class="row"><div class="side"><b>Circuit</b><select onchange="S.task=TK[this.value];S.comps=[];S.wires=[];S.hist=[];S.fut=[];sim();draw();$('#tt').innerHTML=ttable()">${TK.map((t, i) => L.includes(t) ? `<option value="${i}" ${t == S.task ? 'selected' : ''}>${t.n}</option>` : '').join('')}</select>
+<b>Instructions</b><ol id="st"></ol><b>Components</b><input id="cs" placeholder="Search: 7408, LED, switch…" oninput="sr()"><div id="sr"></div>
+<p><button class="alt" onclick="undo()">↶ Undo</button> <button class="alt" onclick="redo()">↷ Redo</button> <button class="alt" onclick="snap();S.comps=[];S.wires=[];sim();draw()">Clear</button></p><p><button onclick="verify()">Verify circuit</button> <label><input type="checkbox" checked style="width:auto" onchange="$('#tilt').classList.toggle('on',this.checked)"> 3D tilt</label></p><small>Click a pin, then another pin to place a wire. Click a wire to delete it. Click switches to toggle; hold CLK to pulse. Wire colour: orange = 1, black = 0.</small><div id="tt"></div></div>
+<div class="bw"><div id="msg"></div><div id="pc"></div><div id="sw"><div id="tilt" class="on"><div id="svgw"></div></div></div></div></div>`;
+      $('#tt').innerHTML = ttable();
+      const w = $('#svgw');
+      w.onclick = e => {
+        const el = e.target.closest('[data-p],[data-w],[data-sw],[data-ic]'); if (!el) return;
+        const d = el.dataset;
+        if (d.p) {
+          if (!S.pend) S.pend = d.p;
+          else {
+            if (S.pend != d.p && !S.wires.some(x => x.includes(S.pend) && x.includes(d.p))) { snap(); S.wires.push([S.pend, d.p]); }
+            S.pend = null; sim();
+          }
+          draw();
+        } else if (d.w !== undefined) {
+          snap(); S.wires.splice(+d.w, 1); sim(); draw();
+        } else if (d.sw) {
+          S.sw[d.sw] ^= 1; sim(); draw();
+        } else if (d.ic) {
+          S.sel = d.ic; draw();
+        }
+      };
+      w.onpointerdown = e => {
+        const el = e.target.closest('[data-clk]');
+        if (el) { S.sw[el.dataset.clk] = 1; S.clk = el.dataset.clk; sim(); draw(); }
+      };
+      sim(); draw();
+    }
+
+    addEventListener('pointerup', () => { if (S && S.clk) { S.sw[S.clk] = 0; S.clk = null; sim(); draw(); } });
+    const sim_wrap = sim_;
+
+    function verilog(m) {
+      const fsm = V.i == 8;
+      m.innerHTML = `<h2>Let's simulate: ${T[V.i][0]}</h2>${tabs(V.i)}` + (fsm ? `<div class="box"><b>Steps in ModelSim</b><ol><li>Create <code>fsm.v</code> with the module below and a testbench <code>tb.v</code> that drives <code>clk</code>, <code>reset</code>, <code>x</code>.</li><li>Run: <code>vlib work</code>, <code>vlog fsm.v tb.v</code>, <code>vsim tb</code>, <code>add wave *</code>, <code>run -all</code>.</li><li>Reset first, then feed bits on x each clock; y goes 1 in state S3 (three or more consecutive 1s).</li><li>Try the bit stream below to preview the waveform behaviour.</li></ol></div><pre>module FSM_moore(input clk,reset,x, output reg y);
+ localparam S0=0,S1=1,S2=2,S3=3;
+ reg [1:0] state,next_state;
+ always @(posedge clk or posedge reset)
+  if(reset) state<=S0; else state<=next_state;
+ always @(*) case(state)
+  S0: next_state = x ? S1 : S0;
+  S1: next_state = x ? S2 : S0;
+  S2: next_state = x ? S3 : S0;
+  S3: next_state = x ? S3 : S0;
+  default: next_state = S0;
+ endcase
+ always @(*) y = (state==S3);
+endmodule</pre><p>Input bits: <input id="fb" value="0111101110" style="padding:6px;border:2px solid #000;border-radius:6px"> <button onclick="fsmRun()">Run clocks</button></p><table id="ft"></table>` : `<div class="box"><b>Steps in ModelSim</b><ol><li>Save the RAM module as <code>ram.v</code> and write a testbench that toggles <code>clk</code>, sets <code>write_enable=1</code>, applies <code>address</code> and <code>data_in</code>, then sets <code>write_enable=0</code> to read back.</li><li><code>vlog ram.v tb.v</code>, <code>vsim tb</code>, <code>add wave *</code>, <code>run -all</code>.</li><li>Use the virtual RAM below to preview: each button press is one rising clock edge.</li></ol></div><pre>module ram(input clk, write_enable, input [9:0] address,
+ input [7:0] data_in, output reg [7:0] data_out);
+ reg [7:0] ram_block [0:1023];
+ integer i;
+ initial for(i=0;i&lt;1024;i=i+1) ram_block[i]=8'b0;
+ always @(posedge clk)
+  if(write_enable) ram_block[address] &lt;= data_in;
+  else data_out &lt;= ram_block[address];
+endmodule</pre><p>Address (0–1023) <input id="ra" type="number" value="3" style="width:90px"> Data (0–255) <input id="rd" type="number" value="165" style="width:90px"> <button onclick="ramOp(1)">Clock with WE=1 (write)</button> <button class="alt" onclick="ramOp(0)">Clock with WE=0 (read)</button></p><p id="ro"><b>data_out = 0</b></p><div id="rlog"></div>`);
+    }
+
+    function fsmRun() {
+      const bits = [...$('#fb').value.replace(/[^01]/g, '')]; let s = 0, r = '<tr><th>clk<th>x<th>state<th>y</tr><tr><td>reset<td>–<td>S0<td>0';
+      bits.forEach((b, i) => { s = b == '1' ? Math.min(s + 1, 3) : 0; r += `<tr><td>${i + 1}<td>${b}<td>S${s}<td>${s == 3 ? 1 : 0}`; });
+      $('#ft').innerHTML = r;
+    }
+
+    const M = new Array(1024).fill(0); let dout = 0;
+    function ramOp(w) {
+      const a = Math.max(0, Math.min(1023, +$('#ra').value | 0)), d = Math.max(0, Math.min(255, +$('#rd').value | 0));
+      if (w) M[a] = d; else dout = M[a];
+      $('#ro').innerHTML = `<b>data_out = ${dout}</b> (0x${dout.toString(16).toUpperCase()})`;
+      $('#rlog').insertAdjacentHTML('afterbegin', `<div>${w ? 'WRITE' : 'READ '} addr ${a} ${w ? '← ' + d : '→ ' + M[a]}</div>`);
+    }
+
+    function tb() {
+      const p = $('#bp'); p.style.display = p.style.display == 'block' ? 'none' : 'block';
+      if (!$('#bl').children.length) say('Bzzz! I’m Bumble. Ask me about IC pins (e.g. “7483 pins”), wiring steps, power, clock or verify.');
+    }
+    function say(t, u) { $('#bl').insertAdjacentHTML('beforeend', `<p class="${u ? 'u' : ''}">${t}</p>`); $('#bl').scrollTop = 1e5; }
+    function ask() { const q = $('#bi').value.trim(); if (!q) return; $('#bi').value = ''; say(q, 1); say(bot(q.toLowerCase())); }
+    function bot(q) {
+      const m = q.match(/74\d\d/);
+      if (m && IC[m[0]]) { const d = IC[m[0]]; return `${m[0]} – ${d.n}. Vcc = pin ${d.v}, GND = pin ${d.g}. Pins: ` + d.pn.map((x, i) => i && x ? i + '=' + x : '').filter(Boolean).join(', ') + '.'; }
+      const t = (S && S.task) || TK[0];
+      if (/power|vcc|ground|gnd|5v/.test(q)) return 'Connect the +5V rail to the IC’s Vcc pin and the GND rail to its GND pin (14/7 for most 14-pin ICs, 5/12 for 7483, 16/8 for 7485, 5/13 for 7476). Without power the IC outputs nothing.';
+      if (/clock|clk|edge/.test(q)) return 'Hold the CLK button to make 0→1, release for 1→0. 7476 triggers on the falling edge (release), 7474 on the rising edge (press).';
+      if (/float|unused|pre|clr|clear/.test(q)) return 'Unconnected TTL inputs read HIGH, so unused J, K, PRE, CLR may float. PRE and CLR are active-low: pulling one to GND forces Q to 1 or 0.';
+      if (/undo|redo|delete|remove/.test(q)) return 'Use Undo/Redo in the side panel, or click a wire to delete it.';
+      if (/verify|check|wrong|fail|not work|why/.test(q)) return 'Check in order: 1) both Vcc and GND wired on every IC, 2) the pin numbers match the steps, 3) each output goes to the right LED, 4) no wire joins +5V to GND. Then press Verify; it tells you which input pattern failed.';
+      if (/wire|connect|step|how|build/.test(q)) return 'For “' + t.n + '”: ' + t.g.join(' ');
+      const w = q.split(/\W+/).filter(x => x.length > 3); const k = T.find(x => w.some(y => x[0].toLowerCase().includes(y) || x[1].toLowerCase().includes(y)));
+      if (k) return `${k[0]}: ${k[2]} Example: ${k[3]} Used in: ${k[4]}`;
+      return 'I can help with IC pin numbers, wiring steps, power, clock and verifying. Try “7408 pins” or “how do I connect this circuit?”';
+    }
+
+    resetSim();
+    const _r = render;
+    render = function() {
+      if (V.v == 'sim') { nav(); render0(); $('#m').innerHTML = ''; sim_($('#m')); $('#pbt').textContent = ''; }
+      else _r();
+    };
+    render();
+  </script>
+</body>
+</html>
